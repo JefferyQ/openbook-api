@@ -115,6 +115,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'imagekit',
+    'django_rq',
+    'video_encoding',
     'django_nose',
     'storages',
     'django_media_fixtures',
@@ -182,6 +184,15 @@ WSGI_APPLICATION = 'openbook.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
+RQ_QUEUES = {
+    'default': {
+    'HOST': 'localhost',
+    'PORT': 6379,
+    'DB': 0,
+    'DEFAULT_TIMEOUT': 360,
+        }
+    }
+
 if IS_BUILD or TESTING:
     DATABASES = {
         'default': {
@@ -189,6 +200,7 @@ if IS_BUILD or TESTING:
             'NAME': 'open-book-api'
         }
     }
+
 else:
     DATABASES = {
         'default': {

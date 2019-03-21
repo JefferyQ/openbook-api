@@ -28,6 +28,8 @@ bandit = "*"
 pyyaml = "*"
 python-magic = "*"
 django-imagekit = "*"
+django-rq = "*"
+django-video-encoding = "*"
 
 [pipenv]
 allow_prereleases = true

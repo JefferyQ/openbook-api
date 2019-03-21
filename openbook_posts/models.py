@@ -15,9 +15,20 @@ from django.conf import settings
 from openbook.storage_backends import S3PrivateMediaStorage
 from openbook_auth.models import User
 
+from video_encoding.models import Format
+from video_encoding.fields import VideoField
+from django.contrib.contenttypes.fields import GenericRelation
+
+import openbook_posts.signals
 from openbook_common.models import Emoji
 from openbook_common.utils.model_loaders import get_post_reaction_model, get_emoji_model, get_post_comment_model, \
     get_circle_model
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django_rq import enqueue
+
+from video_encoding import tasks
 
 
 class Post(models.Model):
@@ -156,8 +167,17 @@ class PostImage(models.Model):
 
 class PostVideo(models.Model):
     post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name='video')
-    video = models.FileField(_('video'), blank=False, null=False, storage=post_image_storage)
+    video = VideoField(verbose_name=_('video'), storage=post_image_storage, blank=False, null=False)
 
+    format_set = GenericRelation(Format)
+
+
+@receiver(post_save, sender=PostVideo)
+def convert_video(sender, instance, **kwargs):
+        enqueue(tasks.convert_all_videos,
+                instance._meta.app_label,
+                instance._meta.model_name,
+                instance.pk)
 
 class PostComment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -212,3 +232,5 @@ class PostReaction(models.Model):
         if not self.id:
             self.created = timezone.now()
         return super(PostReaction, self).save(*args, **kwargs)
+
+
